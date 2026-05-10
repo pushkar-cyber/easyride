@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>EasyRide | Smart Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; }
+        #map { height: 550px; border-radius: 3rem; z-index: 1; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05); }
+        .search-results { max-height: 200px; overflow-y: auto; z-index: 2001; border-radius: 1rem; }
+        .discount-glow { color: #10b981 !important; text-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <nav class="bg-white/80 backdrop-blur-md border-b border-slate-100 px-10 py-5 flex justify-between items-center sticky top-0 z-[2000]">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2.5 rounded-2xl text-white shadow-lg shadow-indigo-200 italic"><i class="fas fa-car-side text-xl"></i></div>
+            <h1 class="text-2xl font-extrabold italic text-slate-900 tracking-tighter uppercase leading-none">EasyRide</h1>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="hidden md:flex flex-col items-end border-r pr-6 border-slate-100">
+                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Welcome Back</span>
+                <span id="userNameDisp" class="text-sm font-bold text-slate-700 italic">Hello, User</span>
+            </div>
+            <button onclick="logout()" class="text-slate-400 font-bold hover:text-red-500 uppercase text-[10px] tracking-widest transition-all">Logout</button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <!-- Input Side -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-50">
+                <h2 class="text-2xl font-black mb-8 tracking-tight text-slate-800">Book Your Trip</h2>
+                
+                <div class="mb-6 grid grid-cols-3 gap-2">
+                    <button onclick="setVeh('Bike', 0.6)" class="veh-btn p-3 border rounded-2xl text-center hover:bg-slate-50 transition" id="v-Bike"><i class="fas fa-motorcycle block mb-1 text-slate-400"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Bike</span></button>
+                    <button onclick="setVeh('Mini', 1)" class="veh-btn p-3 border-2 border-indigo-600 bg-indigo-50 rounded-2xl text-center" id="v-Mini"><i class="fas fa-car-side block mb-1 text-indigo-600"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Mini</span></button>
+                    <button onclick="setVeh('Sedan', 1.4)" class="veh-btn p-3 border rounded-2xl text-center hover:bg-slate-50 transition" id="v-Sedan"><i class="fas fa-car block mb-1 text-slate-400"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Sedan</span></button>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="text-[10px] font-extrabold text-indigo-500 uppercase tracking-widest ml-1">Pickup</label>
+                        <input type="text" id="pI" oninput="search(this.value, 'p')" placeholder="Search pickup..." class="w-full p-4 mt-1 bg-slate-50 border-0 rounded-2xl outline-none text-sm font-bold focus:ring-2 ring-indigo-100">
+                        <div id="pRes" class="search-results absolute w-full bg-white shadow-2xl mt-2 hidden border border-slate-100 overflow-hidden"></div>
+                    </div>
+                    <div class="relative">
+                        <label class="text-[10px] font-extrabold text-rose-500 uppercase tracking-widest ml-1">Drop</label>
+                        <input type="text" id="dI" oninput="search(this.value, 'd')" placeholder="Search destination..." class="w-full p-4 mt-1 bg-slate-50 border-0 rounded-2xl outline-none text-sm font-bold focus:ring-2 ring-rose-100">
+                        <div id="dRes" class="search-results absolute w-full bg-white shadow-2xl mt-2 hidden border border-slate-100 overflow-hidden"></div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Payment Mode</label>
+                    <select id="payMethod" class="w-full p-3 mt-1 bg-slate-50 rounded-xl text-sm font-bold outline-none border-none"><option value="Cash">Cash Payment</option><option value="UPI">UPI / GPay</option></select>
+                </div>
+
+                <!-- Fare Card (UI Fixed) -->
+                <div class="mt-10 bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl shadow-indigo-100 text-white relative">
+                    <div class="flex justify-between items-end relative z-10">
+                        <div>
+                            <p class="text-indigo-300 text-[10px] font-black uppercase mb-1">Total Amount</p>
+                            <h3 id="fare" class="text-5xl font-black tracking-tighter transition-all duration-500">₹0</h3>
+                        </div>
+                        <button onclick="verify()" id="vB" class="bg-indigo-600 hover:bg-indigo-500 transition-all px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-900/50">Verify ID</button>
+                    </div>
+                    <!-- Fixed Discount Badge UI -->
+                    <div id="sTag" class="hidden mt-5 pt-4 border-t border-white/10 flex items-center gap-2 text-emerald-400 text-[11px] font-bold uppercase tracking-widest italic">
+                        <div class="h-6 w-6 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-check text-[10px]"></i>
+                        </div>
+                        <span>Student Discount Active (25% Off)</span>
+                    </div>
+                </div>
+
+                <button onclick="book()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-[2rem] font-black text-lg mt-8 shadow-xl shadow-indigo-100 transition-all active:scale-95 uppercase tracking-widest">Confirm Ride</button>
+            </div>
+        </div>
+
+        <!-- Map Side -->
+        <div class="lg:col-span-8"><div id="map" class="border-4 border-white shadow-xl"></div></div>
+    </main>
+
+    <script>
+        // --- Security & Session Sync ---
+        let uS = JSON.parse(localStorage.getItem('EZ_SESSION'));
+        if(!uS) window.location.href = 'auth.html';
+        
+        // मास्टर डेटाबेस से यूजर का लेटेस्ट स्टेटस निकालें
+        const masterDB = JSON.parse(localStorage.getItem('EASY_RIDE_MASTER_DB')) || { users: [] };
+        const currentUser = masterDB.users.find(u => (u.email === uS.email || u.phone === uS.phone));
+        
+        // अगर यूजर पहले से वेरिफाइड है, तो UI सेट करें
+        let isV = currentUser && currentUser.isVerified ? true : false;
+        
+        document.getElementById('userNameDisp').innerText = `Hello, ${uS.name ? uS.name.split(' ')[0] : 'Rider'}`;
+        if(isV) {
+            applyDiscountUI();
+        }
+
+        const map = L.map('map', { zoomControl: false }).setView([20.5937, 78.9629], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+        let p_c, d_c, pm, dm, rl, dist = 0, selectedVeh = 'Mini', vMult = 1;
+
+        function setVeh(type, mult) {
+            selectedVeh = type; vMult = mult;
+            document.querySelectorAll('.veh-btn').forEach(b => {
+                b.className = "veh-btn p-3 border rounded-2xl text-center hover:bg-slate-50 transition";
+                b.querySelector('i').classList.replace('text-indigo-600', 'text-slate-400');
+            });
+            const activeBtn = document.getElementById('v-'+type);
+            activeBtn.className = "veh-btn p-3 border-2 border-indigo-600 bg-indigo-50 rounded-2xl text-center";
+            activeBtn.querySelector('i').classList.replace('text-slate-400', 'text-indigo-600');
+            if(dist > 0) updateFare();
+        }
+
+        async function search(q, t) {
+            const resDiv = document.getElementById(t + 'Res');
+            if (q.length < 3) { resDiv.classList.add('hidden'); return; }
+            const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=5`);
+            const data = await res.json();
+            resDiv.classList.remove('hidden');
+            resDiv.innerHTML = data.features.map(f => `<div onclick="select('${t}', ${f.geometry.coordinates[1]}, ${f.geometry.coordinates[0]}, '${f.properties.name || ''} ${f.properties.city || ''}')" class="p-4 hover:bg-slate-50 cursor-pointer border-b text-xs font-bold text-slate-700"><b>${f.properties.name || 'Location'}</b><br><small class="text-slate-400">${f.properties.city || ''}</small></div>`).join('');
+        }
+
+        function select(t, lat, lon, n) {
+            const c = [lat, lon]; document.getElementById(t + 'I').value = n;
+            document.querySelectorAll('.search-results').forEach(el => el.classList.add('hidden'));
+            if (t === 'p') { p_c = c; if (pm) map.removeLayer(pm); pm = L.marker(c).addTo(map); }
+            else { d_c = c; if (dm) map.removeLayer(dm); dm = L.marker(c).addTo(map); }
+            map.flyTo(c, 14); if (p_c && d_c) draw();
+        }
+
+        async function draw() {
+            const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${p_c[1]},${p_c[0]};${d_c[1]},${d_c[0]}?overview=full&geometries=geojson`);
+            const data = await res.json();
+            if (data.routes && data.routes[0]) {
+                dist = (data.routes[0].distance / 1000).toFixed(1);
+                if (rl) map.removeLayer(rl);
+                rl = L.geoJSON(data.routes[0].geometry, { style: { color: '#4f46e5', weight: 6 } }).addTo(map);
+                map.fitBounds(rl.getBounds(), { padding: [50, 50] });
+                updateFare();
+            }
+        }
+
+        function updateFare() { 
+            let p = (40 + (dist * 15)) * vMult; 
+            if(isV) p *= 0.75; 
+            document.getElementById('fare').innerText = "₹" + Math.round(p); 
+        }
+
+        // --- Permanent Verification Logic ---
+        function verify() {
+            let emailToCheck = uS.email;
+            if(!emailToCheck) {
+                emailToCheck = prompt("Enter your College Email for Permanent Discount:");
+                if(!emailToCheck) return;
+            }
+
+            const domains = ['.edu', '.ac.in', '.net', '.org', '.university'];
+            if(domains.some(d => emailToCheck.toLowerCase().includes(d))) {
+                
+                // मास्टर डेटाबेस अपडेट करें (ताकि ये हमेशा के लिए सेव हो जाए)
+                let db = JSON.parse(localStorage.getItem('EASY_RIDE_MASTER_DB'));
+                let userIndex = db.users.findIndex(u => (u.email === uS.email || u.phone === uS.phone));
+                
+                if(userIndex !== -1) {
+                    db.users[userIndex].isVerified = true;
+                    db.users[userIndex].email = emailToCheck; // ईमेल सेव करें अगर फोन से आए थे
+                    localStorage.setItem('EASY_RIDE_MASTER_DB', JSON.stringify(db));
+                    
+                    // सेशन भी अपडेट करें
+                    uS.isVerified = true;
+                    uS.email = emailToCheck;
+                    localStorage.setItem('EZ_SESSION', JSON.stringify(uS));
+                    
+                    isV = true;
+                    applyDiscountUI();
+                    updateFare();
+                    alert("Verification Successful! Your account now has a permanent student discount.");
+                }
+            } else {
+                alert("Invalid Domain! Student discount not eligible.");
+            }
+        }
+
+        function applyDiscountUI() {
+            document.getElementById('fare').classList.add('discount-glow');
+            document.getElementById('sTag').classList.remove('hidden');
+            const vB = document.getElementById('vB');
+            vB.innerHTML = '<i class="fas fa-check mr-1"></i> Verified';
+            vB.className = "bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-900/20";
+            vB.onclick = null;
+        }
+
+        function book() {
+            if(!p_c || !d_c) return alert("Select locations first!");
+            const db = JSON.parse(localStorage.getItem('EASY_RIDE_MASTER_DB')) || { users: [], rides: [], drivers: [] };
+            const availableDrivers = (db.drivers || []).filter(d => d.type === selectedVeh);
+
+            if(availableDrivers.length === 0) return alert(`No ${selectedVeh} drivers available right now.`);
+
+            const assignedDr = availableDrivers[Math.floor(Math.random() * availableDrivers.length)];
+            let rating = prompt(`Driver ${assignedDr.name} assigned! Rate him (1-5):`, "5");
+            if(!rating || isNaN(rating) || rating < 1 || rating > 5) rating = "5";
+
+            db.rides.push({ 
+                id: "RID-"+Math.floor(10000 + Math.random()*90000), 
+                user: uS.name || uS.phone, 
+                driver: assignedDr.name, 
+                drVeh: assignedDr.veh,
+                contact: uS.email || uS.phone,
+                fare: document.getElementById('fare').innerText, 
+                vehicle: selectedVeh, 
+                payment: document.getElementById('payMethod').value, 
+                rating: rating, 
+                time: new Date().toLocaleString() 
+            });
+
+            localStorage.setItem('EASY_RIDE_MASTER_DB', JSON.stringify(db));
+            alert("Ride Booked Successfully!");
+            location.reload();
+        }
+
+        function logout() { localStorage.removeItem('EZ_SESSION'); localStorage.removeItem('EZ_ROLE'); window.location.href = 'index.html'; }
+    </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>EasyRide | Flexible Auth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#F8FAFC] flex items-center justify-center min-h-screen p-6">
+
+    <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md border border-slate-100">
+        <h1 class="text-4xl font-black text-indigo-600 text-center mb-8 italic tracking-tighter">EasyRide</h1>
+        
+        <form id="masterForm" class="space-y-4">
+            <!-- Registration Only Fields -->
+            <div id="signupBox">
+                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Full Name</label>
+                <input type="text" id="uName" placeholder="John Doe" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none focus:ring-2 ring-indigo-500 mb-2">
+            </div>
+
+            <!-- Flexible Login/Signup Field -->
+            <div>
+                <label id="idLabel" class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Email or Mobile Number</label>
+                <input type="text" id="uIdentifier" placeholder="Enter email or phone" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none focus:ring-2 ring-indigo-500" required>
+                <p class="text-[9px] text-slate-400 mt-1 ml-2">*At least one contact method is required</p>
+            </div>
+            
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Password</label>
+                <input type="password" id="uPass" placeholder="••••••••" class="w-full p-4 bg-slate-50 border-0 rounded-2xl outline-none focus:ring-2 ring-indigo-500" required>
+            </div>
+            
+            <button type="submit" id="btnMain" class="w-full bg-indigo-600 text-white py-4 rounded-[2rem] font-black shadow-lg hover:bg-indigo-700 transition-all uppercase tracking-widest mt-4">Get OTP & Continue</button>
+        </form>
+        
+        <button onclick="toggleAuth()" id="btnToggle" class="w-full mt-6 text-xs text-indigo-600 font-bold uppercase underline tracking-widest">Already a member? Login</button>
+    </div>
+
+    <!-- OTP MODAL -->
+    <div id="otpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-[3000] p-6">
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full text-center">
+            <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl"><i class="fas fa-shield-check"></i></div>
+            <h2 class="text-2xl font-black mb-2">Verify Access</h2>
+            <p class="text-slate-400 text-sm mb-8">Enter the 4-digit code shown in the simulation alert.</p>
+            <div class="flex justify-center gap-3 mb-8">
+                <input type="text" maxlength="1" class="otp-in w-14 h-14 text-center text-2xl font-black bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none">
+                <input type="text" maxlength="1" class="otp-in w-14 h-14 text-center text-2xl font-black bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none">
+                <input type="text" maxlength="1" class="otp-in w-14 h-14 text-center text-2xl font-black bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none">
+                <input type="text" maxlength="1" class="otp-in w-14 h-14 text-center text-2xl font-black bg-slate-50 border-2 border-transparent focus:border-indigo-500 rounded-2xl outline-none">
+            </div>
+            <button onclick="verifyOTP()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 uppercase tracking-widest">Verify & Login</button>
+        </div>
+    </div>
+
+    <script>
+        let isLogin = false;
+        let generatedOTP = null;
+        let pendingUser = null;
+
+        function toggleAuth() {
+            isLogin = !isLogin;
+            document.getElementById('signupBox').style.display = isLogin ? 'none' : 'block';
+            document.getElementById('btnMain').innerText = isLogin ? 'Login' : 'Get OTP & Continue';
+            document.getElementById('btnToggle').innerText = isLogin ? 'New User? Sign Up' : 'Already a member? Login';
+        }
+
+        document.getElementById('masterForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const identifier = document.getElementById('uIdentifier').value.trim();
+            const pass = document.getElementById('uPass').value;
+            const name = document.getElementById('uName').value;
+
+            // Admin Shortcut
+            if(identifier === "admin@easyride.com" && pass === "Admin@123") {
+                localStorage.setItem('EZ_ROLE', 'admin');
+                window.location.href = 'admin.html'; return;
+            }
+
+            let db = JSON.parse(localStorage.getItem('EASY_RIDE_MASTER_DB')) || { users: [], rides: [] };
+
+            if(!isLogin) {
+                // Check if identifier (Email or Phone) already exists
+                const exists = db.users.some(u => u.email === identifier || u.phone === identifier);
+                if(exists) { alert("User already exists with this email/phone!"); return; }
+                
+                // Determine if it's an email or phone
+                const isEmail = identifier.includes('@');
+                pendingUser = { 
+                    name: name, 
+                    email: isEmail ? identifier : "", 
+                    phone: !isEmail ? identifier : "", 
+                    pass: pass 
+                };
+            } else {
+                // Login Search (Either Email OR Phone)
+                const found = db.users.find(u => (u.email === identifier || u.phone === identifier) && u.pass === pass);
+                if(!found) { alert("Account not found or wrong password!"); return; }
+                pendingUser = found;
+            }
+
+            // SIMULATE OTP
+            generatedOTP = Math.floor(1000 + Math.random() * 9000);
+            alert(`[EasyRide Security]\nYour verification code is: ${generatedOTP}`);
+            document.getElementById('otpModal').style.display = 'flex';
+        });
+
+        function verifyOTP() {
+            let entered = "";
+            document.querySelectorAll('.otp-in').forEach(i => entered += i.value);
+
+            if(entered == generatedOTP) {
+                let db = JSON.parse(localStorage.getItem('EASY_RIDE_MASTER_DB')) || { users: [], rides: [] };
+                if(!isLogin) {
+                    db.users.push(pendingUser);
+                    localStorage.setItem('EASY_RIDE_MASTER_DB', JSON.stringify(db));
+                }
+                localStorage.setItem('EZ_ROLE', 'user');
+                localStorage.setItem('EZ_SESSION', JSON.stringify(pendingUser));
+                window.location.href = 'dashboard.html';
+            } else { alert("Incorrect OTP!"); }
+        }
+
+        // OTP Auto-focus
+        const inputs = document.querySelectorAll('.otp-in');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key >= 0 && e.key <= 9) { if (index < 3) inputs[index + 1].focus(); }
+                else if (e.key === "Backspace") { if (index > 0) inputs[index - 1].focus(); }
+            });
+        });
+    </script>
+</body>
+</html>

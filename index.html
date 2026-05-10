@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>EasyRide | Future of Mobility</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #000; color: #fff; }
+        .hero-pattern { background: radial-gradient(circle at 2px 2px, #4f46e5 1px, transparent 0); background-size: 40px 40px; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    </style>
+</head>
+<body class="hero-pattern">
+    <nav class="fixed w-full z-50 px-10 py-8">
+        <div class="max-w-7xl mx-auto glass rounded-3xl px-8 py-4 flex justify-between items-center shadow-2xl">
+            <div class="flex items-center gap-2">
+                <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-lg"><i class="fas fa-car-side text-xl"></i></div>
+                <h1 class="text-2xl font-black italic tracking-tighter uppercase">EasyRide</h1>
+            </div>
+            <a href="auth.html" class="bg-white text-black px-8 py-3 rounded-2xl font-black hover:bg-indigo-500 hover:text-white transition-all">Start Riding</a>
+        </div>
+    </nav>
+
+    <header class="min-h-screen flex items-center pt-20">
+        <div class="max-w-7xl mx-auto px-10 grid lg:grid-cols-2 gap-20 items-center">
+            <div class="space-y-10 text-left">
+                <h2 class="text-8xl font-black leading-none tracking-tighter">Ride the <br><span class="text-indigo-500 italic">Future.</span></h2>
+                <p class="text-gray-400 text-xl font-medium leading-relaxed max-w-md">Verified safety on every mile. Experience the future of mobility with EasyRide.</p>
+                <a href="auth.html" class="inline-block bg-indigo-600 px-12 py-5 rounded-3xl font-black text-xl shadow-2xl shadow-indigo-500/20">Book Now</a>
+            </div>
+            <img src="https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&q=80&w=1000" class="rounded-[4rem] shadow-2xl border-4 border-white/10">
+        </div>
+    </header>
+
+    <!-- PROFESSIONAL FOOTER -->
+    <footer class="bg-white text-slate-900 pt-20 pb-10 px-10 rounded-t-[4rem]">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
+            <div class="md:col-span-2">
+                <h2 class="text-3xl font-black italic text-indigo-600 mb-6 uppercase tracking-tighter">EasyRide</h2>
+                <p class="text-slate-400 text-sm font-medium leading-relaxed max-w-sm">Premium mobility platform designed for verified communities. Experience the fastest routing and smartest travel in your city.</p>
+                <div class="flex gap-4 mt-8">
+                    <a href="#" class="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 hover:text-indigo-600 transition-all shadow-sm"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 hover:text-indigo-600 transition-all shadow-sm"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 hover:text-indigo-600 transition-all shadow-sm"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 mb-8">Navigation</h4>
+                <ul class="text-slate-500 text-sm space-y-4 font-bold">
+                    <li><a href="about.html" class="hover:text-indigo-600 transition-colors">Our Mission</a></li>
+                    <li><a href="safety.html" class="hover:text-indigo-600 transition-colors">Safety Standard</a></li>
+                    <li><a href="help.html" class="hover:text-indigo-600 transition-colors">Help Center</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 mb-8">Legal</h4>
+                <ul class="text-slate-500 text-sm space-y-4 font-bold">
+                    <li><a href="privacy.html" class="hover:text-indigo-600 transition-colors">Privacy Policy</a></li>
+                    <li><a href="terms.html" class="hover:text-indigo-600 transition-colors">Terms of Service</a></li>
+                    <li><a href="auth.html" class="hover:text-indigo-600 transition-colors italic border-t pt-4">Admin Portal</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto border-t border-slate-50 mt-16 pt-8 text-center">
+            <p class="text-slate-300 text-[10px] font-black uppercase tracking-widest">© 2024 EasyRide Mobility Inc. All Rights Reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
